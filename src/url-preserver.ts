@@ -15,7 +15,7 @@ export const preserveUrls = async (markdown: string, prompt: string): Promise<st
 
   const tokens = Object.keys(urlMap)
 
-  // Send to LLM with retry logic
+  // Send to LLM with retry logic for missing tokens
   const systemPrompt = `${prompt}
 
 CRITICAL - CONTENT PRESERVATION RULES:
@@ -26,7 +26,6 @@ CRITICAL - CONTENT PRESERVATION RULES:
 5. You are a FORMATTER only, not an editor - your job is to style the content, not to curate it`
 
   let output = ""
-  let lastMissingTokens: string[] = []
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const response = await fetch("http://localhost:11434/api/chat", {
@@ -40,7 +39,7 @@ CRITICAL - CONTENT PRESERVATION RULES:
         ],
         stream: false,
         options: {
-          seed: 42 + attempt, // Vary seed on retry for different results
+          seed: 42 + attempt, // Vary seed on retry
           temperature: 0,
           num_predict: 8192,
         },
@@ -51,13 +50,9 @@ CRITICAL - CONTENT PRESERVATION RULES:
 
     // Check if all tokens are present
     const missingTokens = tokens.filter((token) => !output.includes(token))
-
     if (missingTokens.length === 0) {
-      break // All tokens present, success
+      break // Success - all tokens present
     }
-
-    lastMissingTokens = missingTokens
-    // Continue to retry
   }
 
   // Restore all original URLs (replace ALL occurrences)
