@@ -31,10 +31,15 @@ IMPORTANT: You MUST preserve all markdown links exactly as they appear. Keep the
   const res = await response.json()
   let output = res.message.content
 
-  // Restore all original URLs
+  // Restore all original URLs (replace ALL occurrences)
   for (const [token, url] of Object.entries(urlMap)) {
-    output = output.replace(token, url)
+    // Use split/join for global replacement (works in all JS versions)
+    output = output.split(token).join(url)
   }
+
+  // Convert any remaining markdown links to HTML anchors
+  // This handles cases where LLM outputs markdown syntax as text
+  output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
 
   return output
 }
