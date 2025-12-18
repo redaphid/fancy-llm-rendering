@@ -39,7 +39,7 @@ CRITICAL - CONTENT PRESERVATION RULES:
         ],
         stream: false,
         options: {
-          seed: 42 + attempt, // Vary seed on retry
+          seed: 42 + attempt,
           temperature: 0,
           num_predict: 8192,
         },
@@ -51,7 +51,7 @@ CRITICAL - CONTENT PRESERVATION RULES:
     // Check if all tokens are present
     const missingTokens = tokens.filter((token) => !output.includes(token))
     if (missingTokens.length === 0) {
-      break // Success - all tokens present
+      break
     }
   }
 
