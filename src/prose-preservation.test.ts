@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest"
+import { describe, it, expect, beforeAll } from "vitest"
 import { renderFragment, renderDocument, extractUrls, validateUrls } from "./render"
 
 describe("URL preservation in prose paragraphs", () => {
@@ -43,7 +43,7 @@ If you encounter rate limit errors, our [troubleshooting guide](https://support.
     describe("renderFragment", () => {
       let result: string
 
-      beforeEach(async () => {
+      beforeAll(async () => {
         result = await renderFragment(markdown)
       })
 
@@ -87,7 +87,7 @@ For those interested in the technical details, our [architecture diagram](https:
     describe("renderDocument", () => {
       let result: string
 
-      beforeEach(async () => {
+      beforeAll(async () => {
         result = await renderDocument(markdown)
       })
 
@@ -136,7 +136,7 @@ Already have an account? [Sign in here](https://app.exmaple.com/login?redirect=/
     describe("renderFragment", () => {
       let result: string
 
-      beforeEach(async () => {
+      beforeAll(async () => {
         result = await renderFragment(markdown)
       })
 
@@ -197,7 +197,7 @@ Read our [Terms of Service](https://legal.exmaple.com/tos?version=2024-01&jurisd
     describe("renderFragment", () => {
       let result: string
 
-      beforeEach(async () => {
+      beforeAll(async () => {
         result = await renderFragment(markdown)
       })
 
@@ -289,7 +289,7 @@ Finally, stay updated with our [changelog](https://releases.exmaple.com/changelo
   describe("renderFragment with 20 links", () => {
     let result: string
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       result = await renderFragment(markdown)
     })
 
@@ -302,7 +302,7 @@ Finally, stay updated with our [changelog](https://releases.exmaple.com/changelo
   describe("renderDocument with 20 links", () => {
     let result: string
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       result = await renderDocument(markdown)
     })
 

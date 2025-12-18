@@ -1,3 +1,5 @@
+const MAX_RETRIES = 3
+
 export const preserveUrls = async (markdown: string, prompt: string): Promise<string> => {
   // Extract all URLs from markdown links
   const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g
@@ -11,25 +13,52 @@ export const preserveUrls = async (markdown: string, prompt: string): Promise<st
     return `[${linkText}](${token})`
   })
 
-  // Send to LLM
+  const tokens = Object.keys(urlMap)
+
+  // Send to LLM with retry logic
   const systemPrompt = `${prompt}
 
-IMPORTANT: You MUST preserve all markdown links exactly as they appear. Keep the [text](url) format intact. Never remove or modify links.`
+CRITICAL - CONTENT PRESERVATION RULES:
+1. You MUST include ALL content from the input - do NOT summarize, condense, or omit ANY text
+2. Every single sentence from the input must appear in the output
+3. ALL markdown links must be preserved exactly as [text](url) format - never remove or modify them
+4. Do NOT make editorial decisions about what to include - include EVERYTHING
+5. You are a FORMATTER only, not an editor - your job is to style the content, not to curate it`
 
-  const response = await fetch("http://localhost:11434/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "qwen3:8b",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: tokenized },
-      ],
-      stream: false,
-    }),
-  })
-  const res = await response.json()
-  let output = res.message.content
+  let output = ""
+  let lastMissingTokens: string[] = []
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const response = await fetch("http://localhost:11434/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "qwen3:8b",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: tokenized },
+        ],
+        stream: false,
+        options: {
+          seed: 42 + attempt, // Vary seed on retry for different results
+          temperature: 0,
+          num_predict: 8192,
+        },
+      }),
+    })
+    const res = await response.json()
+    output = res.message.content
+
+    // Check if all tokens are present
+    const missingTokens = tokens.filter((token) => !output.includes(token))
+
+    if (missingTokens.length === 0) {
+      break // All tokens present, success
+    }
+
+    lastMissingTokens = missingTokens
+    // Continue to retry
+  }
 
   // Restore all original URLs (replace ALL occurrences)
   for (const [token, url] of Object.entries(urlMap)) {
